@@ -54,4 +54,12 @@ public interface Type extends Identifier {
     default Object of(Object value) {
         return value;
     }
+
+    default Type ofType(Type type) {
+        return this;
+    }
+
+    default boolean isGeneric() {
+        return false;
+    }
 }

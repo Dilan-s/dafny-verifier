@@ -6,6 +6,7 @@ import AST.Generator.VariableNameGenerator;
 import AST.Statements.Statement;
 import AST.Statements.util.ReturnStatus;
 import AST.StringUtils;
+import AST.SymbolTable.Types.GenericType.GenericType;
 import AST.SymbolTable.Types.PrimitiveTypes.Void;
 import AST.SymbolTable.SymbolTable.SymbolTable;
 import AST.SymbolTable.Types.Type;
@@ -24,6 +25,7 @@ public class Method implements Identifier {
 
     private final String name;
     private final List<Type> returnTypes;
+    private Set<String> generics;
     private final List<Variable> args;
     private final List<Variable> retArgs;
     private final SymbolTable symbolTable;
@@ -40,6 +42,13 @@ public class Method implements Identifier {
         this.name = name;
         this.symbolTable = symbolTable;
         this.args = args;
+        this.generics = args.stream()
+            .map(Variable::getType)
+            .filter(Type::isGeneric)
+            .map(t -> (GenericType) t)
+            .map(GenericType::getRepresentation)
+            .collect(Collectors.toSet());
+
         this.requires = new HashSet<>();
         this.ensures = new HashSet<>();
         this.modifies = new HashSet<>();
@@ -75,18 +84,13 @@ public class Method implements Identifier {
         return noOfUses;
     }
 
-    public void addArgument(String name, Type type) {
-        addArgument(new Variable(name, type));
-    }
-
-    public void addArgument(List<Variable> vars) {
-        for (Variable v : vars) {
-            addArgument(v);
-        }
-    }
-
     public void addArgument(Variable argument) {
         args.add(argument);
+        Type argT = argument.getType();
+        if (argT.isGeneric()) {
+            GenericType gt = (GenericType) argT;
+            generics.add(gt.getRepresentation());
+        }
         argument.setConstant();
         for (Variable arg : argument.getSymbolTableArgs()) {
             symbolTable.addVariable(arg);
@@ -226,7 +230,12 @@ public class Method implements Identifier {
             .map(v -> String.format("%s: %s", v.getName(), v.getType().getVariableType()))
             .collect(Collectors.joining(", "));
 
-        String res = String.format("method %s(%s) returns (%s)\n", getName(), arguments, types);
+        String genericArgs = "";
+        if (!generics.isEmpty()) {
+            genericArgs = String.format("<%s>", String.join(", ", generics));
+        }
+
+        String res = String.format("method %s%s(%s) returns (%s)\n", getName(), genericArgs, arguments, types);
 
         if (!requires.isEmpty()) {
             res = res + StringUtils.indent("requires " + StringUtils.intersperse(" || ", requires)) + ";\n";
@@ -254,11 +263,17 @@ public class Method implements Identifier {
         incrementUse();
         Map<Variable, Variable> requiresEnsures = new HashMap<>();
         Map<Variable, Variable> paramMap = new HashMap<>();
-        for (int i = 0, argsSize = args.size(); i < argsSize; i++) {
+
+        List<Type> argTypes = args.stream().map(Variable::getType).collect(Collectors.toList());
+
+        for (int i = 0; i < args.size(); i++) {
             Variable arg = args.get(i);
             Variable param = params.get(i);
+            arg.setType(arg.getType().ofType(param.getType()));
             paramMap.put(arg, param);
-            requiresEnsures.put(arg, param);
+            if (!argTypes.get(i).isGeneric()) {
+                requiresEnsures.put(arg, param);
+            }
         }
 
         ReturnStatus returnStatus = body.execute(paramMap, s);
@@ -271,6 +286,12 @@ public class Method implements Identifier {
             addRequires(requiresEnsures);
             addEnsures(requiresEnsures, execute);
         }
+
+        for (int i = 0; i < args.size(); i++) {
+            Variable arg = args.get(i);
+            arg.setType(argTypes.get(i));
+        }
+
         return execute;
     }
 

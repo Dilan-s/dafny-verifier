@@ -47,13 +47,16 @@ public class GenericType implements Type {
 
     @Override
     public boolean isPrintable() {
-        return type.isPrintable();
+        return false;
     }
 
     @Override
     public Type concrete(SymbolTable symbolTable) {
+        if (type != null) {
+            return type.concrete(symbolTable);
+        }
         RandomTypeGenerator typeGenerator = new RandomTypeGenerator();
-        Type type = typeGenerator.generateTypes(1, symbolTable).get(0);
+        type = typeGenerator.generateTypes(1, symbolTable).get(0);
         return type;
     }
 
@@ -133,5 +136,15 @@ public class GenericType implements Type {
 
     public String getRepresentation() {
         return representation;
+    }
+
+    @Override
+    public Type ofType(Type type) {
+        return new GenericType(representation, type);
+    }
+
+    @Override
+    public boolean isGeneric() {
+        return true;
     }
 }

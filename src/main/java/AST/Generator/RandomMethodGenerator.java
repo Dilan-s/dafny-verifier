@@ -5,6 +5,7 @@ import AST.SymbolTable.Method;
 import AST.SymbolTable.SymbolTable.SymbolTable;
 import AST.SymbolTable.Types.Type;
 import AST.SymbolTable.Types.Variables.Variable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RandomMethodGenerator {

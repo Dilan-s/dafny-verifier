@@ -83,14 +83,17 @@ public class PrintStatement extends BaseStatement {
     protected ReturnStatus execute(Map<Variable, Variable> paramMap, StringBuilder s, boolean unused) {
         if (values.isEmpty()) {
             values = new ArrayList<>();
-            variables.stream().filter(symbolTable::variableInScope).forEach(v -> {
-                StringLiteral stringLiteral = new StringLiteral(new DString(), symbolTable, v.getName());
-                VariableExpression expression = new VariableExpression(symbolTable, v, v.getType());
-                values.add(stringLiteral);
-                expanded.add(expanded.size() - 1, stringLiteral.expand());
-                values.add(expression);
-                expanded.add(expanded.size() - 1, expression.expand());
-            });
+            variables.stream()
+                .filter(v -> !v.getType().isGeneric())
+                .filter(symbolTable::variableInScope)
+                .forEach(v -> {
+                    StringLiteral stringLiteral = new StringLiteral(new DString(), symbolTable, v.getName());
+                    VariableExpression expression = new VariableExpression(symbolTable, v, v.getType());
+                    values.add(stringLiteral);
+                    expanded.add(expanded.size() - 1, stringLiteral.expand());
+                    values.add(expression);
+                    expanded.add(expanded.size() - 1, expression.expand());
+                });
         }
 
         List<String> joiner = new ArrayList<>();

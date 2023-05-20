@@ -25,7 +25,7 @@ public class RandomTypeGenerator {
     public static final List<BaseType> PRIMITIVE_TYPES = List.of(new Int(), new Bool(), new Real(), new Char());
     public static final List<DataType> DEFINED_DATA_TYPES = new ArrayList<>();
     private static final double PROB_REUSE_DATATYPE = 0.75;
-    private static final double GENERIC_METHOD_PARAM = 0.25;
+    private static final double GENERIC_METHOD_PARAM = 0.05;
     private static final double REUSE_GENERIC_PARAM = 0.9;
 
     public static double PROB_INT = 40.0;
@@ -214,7 +214,8 @@ public class RandomTypeGenerator {
                 double reuseGeneric = GeneratorConfig.getRandom().nextDouble();
                 if (!genTypes.isEmpty() && reuseGeneric < REUSE_GENERIC_PARAM) {
                     int ind = GeneratorConfig.getRandom().nextInt(genTypes.size());
-                    types.add(genTypes.get(ind));
+                    GenericType gt = genTypes.get(ind);
+                    types.add(gt);
                 } else {
                     GenericType gt = new GenericType(VariableNameGenerator.generateGenericName());
                     genTypes.add(gt);
