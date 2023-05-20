@@ -99,7 +99,7 @@ public class GenericType implements Type {
 
     @Override
     public boolean validMethodType() {
-        return type.validMethodType();
+        return false;
     }
 
     @Override

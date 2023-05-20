@@ -2,6 +2,7 @@ package AST.Generator;
 
 import AST.SymbolTable.Types.DCollectionTypes.DArray;
 import AST.SymbolTable.Types.DMap.DMap;
+import AST.SymbolTable.Types.GenericType.GenericType;
 import AST.SymbolTable.Types.PrimitiveTypes.BaseType;
 import AST.SymbolTable.Types.PrimitiveTypes.Bool;
 import AST.SymbolTable.Types.DCollectionTypes.DSet;
@@ -24,6 +25,8 @@ public class RandomTypeGenerator {
     public static final List<BaseType> PRIMITIVE_TYPES = List.of(new Int(), new Bool(), new Real(), new Char());
     public static final List<DataType> DEFINED_DATA_TYPES = new ArrayList<>();
     private static final double PROB_REUSE_DATATYPE = 0.75;
+    private static final double GENERIC_METHOD_PARAM = 0.25;
+    private static final double REUSE_GENERIC_PARAM = 0.9;
 
     public static double PROB_INT = 40.0;
     public static double PROB_BOOL = 40.0;
@@ -203,15 +206,27 @@ public class RandomTypeGenerator {
     public List<Type> generateMethodTypes(int noOfArgs, SymbolTable symbolTable) {
         typeDepth++;
         List<Type> types = new ArrayList<>();
+        List<GenericType> genTypes = new ArrayList<>();
 
-        int i = 0;
-        while (i < noOfArgs) {
-            Type t = generateTypes(1, symbolTable).get(0);
-            Type concrete = t.concrete(symbolTable);
+        while (types.size() < noOfArgs) {
+            double generic = GeneratorConfig.getRandom().nextDouble();
+            if (generic < GENERIC_METHOD_PARAM) {
+                double reuseGeneric = GeneratorConfig.getRandom().nextDouble();
+                if (!genTypes.isEmpty() && reuseGeneric < REUSE_GENERIC_PARAM) {
+                    int ind = GeneratorConfig.getRandom().nextInt(genTypes.size());
+                    types.add(genTypes.get(ind));
+                } else {
+                    GenericType gt = new GenericType(VariableNameGenerator.generateGenericName());
+                    genTypes.add(gt);
+                    types.add(gt);
+                }
+            } else {
+                Type t = generateTypes(1, symbolTable).get(0);
+                Type concrete = t.concrete(symbolTable);
 
-            if (concrete.validMethodType()) {
-                types.add(concrete);
-                i++;
+                if (concrete.validMethodType()) {
+                    types.add(concrete);
+                }
             }
         }
 
