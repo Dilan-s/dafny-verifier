@@ -11,7 +11,7 @@ target/
 
 src/main/dafny_compiler/
 
-test.dfy
+./test.dfy
 test-go
 test-go-run
 test-java
@@ -22,8 +22,8 @@ test-py
 test.js
 test.dll
 test.runtimeconfig.json
-outputs
-tests
+./outputs
+./tests
 tests-minimized
 tests-incorrect
 package-lock.json
